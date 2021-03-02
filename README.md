@@ -1,4 +1,5 @@
 # Tradebot
+
 Automated algorithmic trading using [Alpaca](https://alpaca.markets/)
 
 * See [alpaca-trade-api-python](https://github.com/alpacahq/alpaca-trade-api-python)
