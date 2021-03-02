@@ -1,3 +1,7 @@
+# Configuration
+config/paper_account_config.ini
+config/live_account_config.ini
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
