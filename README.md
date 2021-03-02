@@ -1,0 +1,2 @@
+# tradebot
+Automated algorithmic trading
