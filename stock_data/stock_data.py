@@ -36,7 +36,6 @@ def index_stock_data(index: str) -> list:
     all_ticker_symbols_on_index = tickers_on_index[index_lower]
 
     stocks = []
-    sdf = StockDataFrame()
     for ticker in list(all_ticker_symbols_on_index):
         try:
             stocks.append(stock_data(ticker[1]))
