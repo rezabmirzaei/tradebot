@@ -1,19 +1,27 @@
-from configparser import ConfigParser
+import time
 
 import alpaca_trade_api as tradeapi
+import schedule
 
-# TODO Handle this elsewhere...
-config = ConfigParser()
-# TODO Configure for different environments (e.g. test/paper vs prod)
-config.read('config/paper_account_config.ini')
-api_key = config.get('API', 'key')
-api_secret = config.get('API', 'secret')
-base_url = config.get('API', 'base_url')
+from account.session_handler import SessionHandler
+from trade.trade_handler import TradeHandler
 
-api = tradeapi.REST(api_key, api_secret, base_url, api_version='v2')
-account = api.get_account()
+session_handler = SessionHandler()
+trade_handler = TradeHandler(session_handler)
 
-print(account)
+
+def run():
+    print(time.strftime('%a %d. %Y %H:%M:%S') + ' - Starting a new run...')
+    trade_handler.handle_positions()
+    trade_handler.execute_trades()
+
+
+# Run every 15min
+schedule.every(15).minutes.do(run)
+
+# TODO Set up properly once all basic functionality implemented
+# while True:
+#    schedule.run_pending()
 
 # Run periodically
 # 1. Check existing portfolio and assess positions
