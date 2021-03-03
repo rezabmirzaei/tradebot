@@ -1,4 +1,5 @@
 from configparser import ConfigParser
+from os import environ
 
 import alpaca_trade_api as tradeapi
 
@@ -7,8 +8,9 @@ class SessionHandler():
 
     def __init__(self) -> None:
         config = ConfigParser()
-        # TODO Configure for different environments (e.g. test/paper vs prod)
-        config.read('config/paper_account_config.ini')
+        config_file_path = 'config/live_account_config.ini' if environ.get(
+            'ENVIRONMENT') == 'PROD' else 'config/paper_account_config.ini'
+        config.read(config_file_path)
         self.api_key = config.get('API', 'key')
         self.api_secret = config.get('API', 'secret')
         self.base_url = config.get('API', 'base_url')
