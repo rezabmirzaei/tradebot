@@ -1,6 +1,3 @@
-from datetime import datetime
-from os.path import dirname, join
-
 import pandas as pd
 import yfinance as yf
 from pytickersymbols import PyTickerSymbols
@@ -42,11 +39,7 @@ def index_stock_data(index: str) -> list:
     sdf = StockDataFrame()
     for ticker in list(all_ticker_symbols_on_index):
         try:
-            ticker_symbol = ticker[1]
-            stock = yf.download(ticker_symbol, period='6mo')
-            stock = sdf.retype(pd.DataFrame(
-                stock[['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']]))
-            stocks.append(stock)
+            stocks.append(stock_data(ticker[1]))
         except Exception as e:
             print(str(e))
             # Nevermind one stock failing, go for the next one
