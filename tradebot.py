@@ -3,17 +3,17 @@ import time
 import alpaca_trade_api as tradeapi
 import schedule
 
-from account.session_handler import SessionHandler
-from trade.trade_handler import TradeHandler
+from autotrade.session_handler import SessionHandler
+from autotrade.trade_executor import TradeExecutor
 
-session_handler = SessionHandler()
-trade_handler = TradeHandler(session_handler)
+sh = SessionHandler()
+tx = TradeExecutor(sh)
 
 
 def run():
     print(time.strftime('%a %d. %Y %H:%M:%S') + ' - Starting a new run...')
-    trade_handler.handle_positions()
-    trade_handler.execute_trades()
+    tx.handle_positions()
+    tx.execute_trades()
 
 
 # Run every 15min

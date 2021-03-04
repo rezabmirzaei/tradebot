@@ -1,9 +1,9 @@
 import alpaca_trade_api as tradeapi
 
-from account.session_handler import SessionHandler
+from autotrade.session_handler import SessionHandler
 
 
-class TradeHandler():
+class TradeExecutor():
 
     def __init__(self, session_handler: SessionHandler) -> None:
         self.session_handler = session_handler
