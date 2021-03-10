@@ -27,16 +27,14 @@ df = DataFetcher()
 da = DataEvaluator()
 
 # Execute the actual identified trades
-tx = TradeExecutor(sh)
+tx = TradeExecutor(sh, am)
 
 
 # TESTING
 
-print(am.buying_power())
-
-#stock_list = df.index_stock_data('dow')
-#evaluated_stock_list = da.evaluate_stock_list(stock_list)
-# tx.execute_trades(evaluated_stock_list)
+stock_list = df.index_stock_data('dow')
+evaluated_stock_list = da.evaluate_stock_list(stock_list)
+tx.execute_trades(evaluated_stock_list)
 
 # END TESTING
 

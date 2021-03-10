@@ -36,7 +36,7 @@ class DataFetcher:
     def stock_data(self, ticker_symbol: str) -> StockData:
         sdf = StockDataFrame()
         ticker = yf.Ticker(ticker_symbol)
-        stock_info = yf.download(ticker_symbol, period='6mo')
+        stock_info = yf.download(ticker_symbol, period='3mo')
         stock_data_frame = sdf.retype(pd.DataFrame(
             stock_info[['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']]))
         return StockData(ticker, stock_data_frame, None)

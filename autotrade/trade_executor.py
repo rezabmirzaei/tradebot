@@ -4,26 +4,42 @@ import alpaca_trade_api as tradeapi
 
 from autotrade.data_fetcher import StockData
 from autotrade.session_handler import SessionHandler
+from autotrade.account_manager import AccountManager
 
 
 class TradeExecutor():
 
-    def __init__(self, session_handler: SessionHandler) -> None:
+    def __init__(self, session_handler: SessionHandler, account_manager: AccountManager) -> None:
         self.session_handler: SessionHandler = session_handler
+        self.account_manager: AccountManager = account_manager
 
     def execute_trades(self, stock_list: List[StockData]) -> None:
         print('Executing trades...')
-        # api = self.session_handler.api()
+        api = self.session_handler.api()
         for stock in stock_list:
+            symbol = str.upper(stock.ticker_symbol())
             try:
-                symbol = stock.ticker_symbol()
-                signal = stock.signal
-                # TODO Handle all other parameters like limit_price, stop-loss etc
+                order_details = self.account_manager.order_details(stock)
+                print(order_details)
 
+                signal = order_details['signal']
                 if signal == 'buy':
                     print("Buying " + symbol)
-                    # api.submit_order(symbol=symbol, qty='5', side=signal,
-                    #                 type='limit', limit_price='265', time_in_force='day')
+                    """ api.submit_order(
+                        symbol=symbol,
+                        side=signal,
+                        type='market',
+                        qty=order_details.qty,
+                        time_in_force='day',
+                        order_class='bracket',
+                        take_profit=dict(
+                            limit_price=order_details.tfo,
+                        ),
+                        stop_loss=dict(
+                            stop_price=order_details.stop_loss,
+                            limit_price=order_details.stop_loss,
+                        )
+                    ) """
                 elif signal == 'sell':
                     print("Selling " + symbol)
             except Exception as e:
