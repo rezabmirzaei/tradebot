@@ -32,6 +32,7 @@ class DataFetcher:
             'cac40': pts.get_yahoo_ticker_symbols_by_index('CAC 40')
         }
 
+    # TODO Use Alpaca.REST.get_bars
     def stock_data(self, ticker_symbol: str) -> StockData:
         sdf = StockDataFrame()
         ticker = yf.Ticker(ticker_symbol)

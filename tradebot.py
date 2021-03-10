@@ -8,11 +8,17 @@ from autotrade.data_evaluator import DataEvaluator
 from autotrade.data_fetcher import DataFetcher
 from autotrade.session_handler import SessionHandler
 from autotrade.trade_executor import TradeExecutor
+from autotrade.account_manager import AccountManager
+
+logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 
 log = logging.getLogger(__name__)
 
 # Handle the session and connectivity to Alpaca
 sh = SessionHandler()
+
+# Manage account (money&risk)
+am = AccountManager(sh)
 
 # Retrieve data on stocks to evaluate and potentially trade on
 df = DataFetcher()
@@ -26,9 +32,11 @@ tx = TradeExecutor(sh)
 
 # TESTING
 
-stock_list = df.index_stock_data('dow')
-evaluated_stock_list = da.evaluate_stock_list(stock_list)
-tx.execute_trades(evaluated_stock_list)
+print(am.buying_power())
+
+#stock_list = df.index_stock_data('dow')
+#evaluated_stock_list = da.evaluate_stock_list(stock_list)
+# tx.execute_trades(evaluated_stock_list)
 
 # END TESTING
 
