@@ -20,11 +20,11 @@ class AccountManager:
         latest_adj_close = stock.stock_data_frame['adj close'][-1]
         buy_price = round(latest_adj_close, 2)
         # TODO Deduce from calculated amount to invest based on RRR
-        qty = 2
+        qty = 1
         # TODO Calculate based on RRR
-        take_profit = buy_price * 1.1
+        take_profit = round(buy_price * 1.01, 2)
         # TODO Calculate based on RRR
-        stop_loss = buy_price * 0.95
+        stop_loss = round(buy_price * 0.99, 2)
         order_details = {
             'symbol': symbol,
             'signal': signal,
