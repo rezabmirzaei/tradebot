@@ -24,24 +24,23 @@ class TradeExecutor():
 
                 signal = order_details['signal']
                 if signal == 'buy':
-                    print("Buying " + symbol)
-                    """ api.submit_order(
+                    print('Buying ' + symbol)
+                    api.submit_order(
                         symbol=symbol,
                         side=signal,
+                        qty=order_details['qty'],
                         type='market',
-                        qty=order_details.qty,
-                        time_in_force='day',
+                        time_in_force='gtc',
                         order_class='bracket',
                         take_profit=dict(
-                            limit_price=order_details.tfo,
+                            limit_price=order_details['take_profit']
                         ),
                         stop_loss=dict(
-                            stop_price=order_details.stop_loss,
-                            limit_price=order_details.stop_loss,
+                            stop_price=order_details['stop_loss']
                         )
-                    ) """
+                    )
                 elif signal == 'sell':
-                    print("Selling " + symbol)
+                    print('Selling ' + symbol)
             except Exception as e:
                 # TODO Log failing order and go for the next one
                 print('Error (' + symbol + '): ' + str(e))

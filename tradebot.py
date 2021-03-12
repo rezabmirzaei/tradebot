@@ -32,7 +32,7 @@ tx = TradeExecutor(sh, am)
 
 # TESTING
 
-stock_list = df.index_stock_data('dow')
+stock_list = [df.stock_data('AAPL')]
 evaluated_stock_list = da.evaluate_stock_list(stock_list)
 tx.execute_trades(evaluated_stock_list)
 

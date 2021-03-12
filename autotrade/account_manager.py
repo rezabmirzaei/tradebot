@@ -22,7 +22,7 @@ class AccountManager:
         # TODO Deduce from calculated amount to invest based on RRR
         qty = 2
         # TODO Calculate based on RRR
-        take_profit_price = buy_price * 1.1
+        take_profit = buy_price * 1.1
         # TODO Calculate based on RRR
         stop_loss = buy_price * 0.95
         order_details = {
@@ -30,17 +30,17 @@ class AccountManager:
             'signal': signal,
             'qty': qty,
             'bid': buy_price,
-            'tfo': take_profit_price,
+            'take_profit': take_profit,
             'stop_loss': stop_loss
         }
         return order_details
 
-    def kelly_criterion(self, probability: float) -> float:
+    def kelly_criterion(self, probability_gain: float) -> float:
         edge = 0
-        if probability <= 1.5:
+        if probability_gain <= 1.5:
             edge = 1
-        profit_factor = round(probability - 1, 2)
-        percentage_gain = math.ceil(1 / probability * 100) + edge
+        profit_factor = round(probability_gain - 1, 2)
+        percentage_gain = math.ceil(1 / probability_gain * 100) + edge
         percentage_loss = 100 - percentage_gain
         win_factor = percentage_gain / 100
         loss_factor = percentage_loss / 100
