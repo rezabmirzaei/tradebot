@@ -22,9 +22,9 @@ class AccountManager:
         # TODO Deduce from calculated amount to invest based on RRR
         qty = 1
         # TODO Calculate based on RRR
-        take_profit = round(buy_price * 1.01, 2)
+        take_profit = round(buy_price * 1.1, 2)
         # TODO Calculate based on RRR
-        stop_loss = round(buy_price * 0.99, 2)
+        stop_loss = round(buy_price * 0.95, 2)
         order_details = {
             'symbol': symbol,
             'signal': signal,
