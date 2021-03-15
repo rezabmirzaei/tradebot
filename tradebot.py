@@ -10,8 +10,8 @@ from autotrade.session_handler import SessionHandler
 from autotrade.trade_executor import TradeExecutor
 from autotrade.account_manager import AccountManager
 
-logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
-
+logging.basicConfig(filename='tradebot.log',
+                    format='%(asctime)s %(message)s', level=logging.INFO)
 log = logging.getLogger(__name__)
 
 # Handle the session and connectivity to Alpaca
@@ -30,17 +30,8 @@ da = DataEvaluator()
 tx = TradeExecutor(sh, am)
 
 
-# TESTING
-
-stock_list = [df.stock_data('AAPL')]
-evaluated_stock_list = da.evaluate_stock_list(stock_list)
-tx.execute_trades(evaluated_stock_list)
-
-# END TESTING
-
-
 def run():
-    print(time.strftime('%a %d. %Y %H:%M:%S') + ' - Starting a new run...')
+    log.info('Starting a new trading run')
     # tx.execute_trades(stock_list)
 
 

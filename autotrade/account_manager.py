@@ -1,7 +1,11 @@
+import logging
 import math
 
-from autotrade.session_handler import SessionHandler
 from autotrade.data_fetcher import StockData
+from autotrade.session_handler import SessionHandler
+
+
+log = logging.getLogger('tradebot.log')
 
 
 class AccountManager:
@@ -33,6 +37,7 @@ class AccountManager:
             'take_profit': take_profit,
             'stop_loss': stop_loss
         }
+        log.info('Created order details:\r%s', order_details)
         return order_details
 
     def kelly_criterion(self, probability_gain: float) -> float:

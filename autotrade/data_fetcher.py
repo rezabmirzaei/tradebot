@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 import pandas as pd
@@ -6,6 +7,8 @@ from pytickersymbols import PyTickerSymbols
 from stockstats import StockDataFrame
 from yfinance import Ticker
 
+log = logging.getLogger('tradebot.log')
+
 
 class StockData:
 
@@ -13,7 +16,6 @@ class StockData:
         self.ticker: Ticker = ticker
         self.stock_data_frame: StockDataFrame = stock_data_frame
         self.signal: str = signal
-        # TODO Add remaining parameters like limit_price, stop-loss etc
 
     def ticker_symbol(self) -> str:
         return self.ticker.info['symbol']
@@ -48,18 +50,21 @@ class DataFetcher:
         try:
             all_ticker_symbols_on_index = list(
                 self.tickers_on_index[index_symbol_lower])
-        except KeyError:
-            print('Can not get tickers for index \'' + index_symbol_lower + '\'')
+        except KeyError as e:
+            log.error('Could not get tickers for index %s\r%s',
+                      index_symbol_lower, str(e))
             return
 
-        print('Getting information for stocks on index ' + index_symbol_lower)
+        log.info('Getting information for stocks on index %s',
+                 index_symbol_lower)
 
         stock_list: List[StockData] = []
         for ticker in all_ticker_symbols_on_index:
             try:
                 stock_list.append(self.stock_data(ticker[1]))
             except Exception as e:
-                print(str(e))
+                log.error('Could not get info for stock %s\r%s',
+                          ticker[1], str(e))
                 # Nevermind one stock failing, go for the next one
                 continue
 

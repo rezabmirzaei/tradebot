@@ -14,6 +14,11 @@ class TradeExecutor():
         self.account_manager: AccountManager = account_manager
 
     def execute_trades(self, stock_list: List[StockData]) -> None:
+
+        # TODO NB! Check account&market conditions before trading
+        # E.g. PDT, market open etc. Notify if issues (email/sms)
+        # If not able to autotrade: notify what should have been traded
+
         print('Executing trades...')
         api = self.session_handler.api()
         for stock in stock_list:
