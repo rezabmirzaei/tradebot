@@ -1,10 +1,13 @@
+import logging
 from typing import List
 
 import alpaca_trade_api as tradeapi
 
+from autotrade.account_manager import AccountManager
 from autotrade.data_fetcher import StockData
 from autotrade.session_handler import SessionHandler
-from autotrade.account_manager import AccountManager
+
+log = logging.getLogger('tradebot.log')
 
 
 class TradeExecutor():
@@ -19,7 +22,7 @@ class TradeExecutor():
         # E.g. PDT, market open etc. Notify if issues (email/sms)
         # If not able to autotrade: notify what should have been traded
 
-        print('Executing trades...')
+        log.info('################\rEXECUTING TRADES\r################')
         api = self.session_handler.api()
         for stock in stock_list:
             symbol = str.upper(stock.ticker_symbol())

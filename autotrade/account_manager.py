@@ -18,6 +18,7 @@ class AccountManager:
         return api.get_account()
 
     def order_details(self, stock: StockData) -> dict:
+        """Calculate details for a given order based on current account status """
         symbol = str.upper(stock.ticker_symbol())
         signal = stock.signal
         # TODO Current price to bid on. Consider asking price, premarket, volume etc...

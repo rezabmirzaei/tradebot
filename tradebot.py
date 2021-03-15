@@ -30,6 +30,22 @@ da = DataEvaluator()
 tx = TradeExecutor(sh, am)
 
 
+# TESTING
+
+log.info('Testing...')
+# stock_list = [df.stock_data('AMC')]
+stock_list = df.index_stock_data('AMC')
+evaluated_stock_list = da.evaluate_stock_list(stock_list)
+# print(evaluated_stock_list[0].stock_data_frame)
+# tx.execute_trades(evaluated_stock_list)
+
+log.info('Account info:\r\t%s', am.account_details())
+#api = sh.api()
+# print(api.list_orders())
+
+# END TESTING
+
+
 def run():
     log.info('Starting a new trading run')
     # tx.execute_trades(stock_list)
