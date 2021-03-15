@@ -13,17 +13,20 @@ log = logging.getLogger('tradebot.log')
 class StockData:
 
     def __init__(self, ticker: Ticker, stock_data_frame: StockDataFrame, signal: str) -> None:
+        """ The stock info and data element to perform all other operations on """
         self.ticker: Ticker = ticker
         self.stock_data_frame: StockDataFrame = stock_data_frame
         self.signal: str = signal
 
     def ticker_symbol(self) -> str:
+        """ Utility method """
         return self.ticker.info['symbol']
 
 
 class DataFetcher:
 
     def __init__(self) -> None:
+        """ Fetch data on a single stock or a list of stocks from configured sources """
         pts = PyTickerSymbols()
         self.tickers_on_index = {
             'dow': pts.get_yahoo_ticker_symbols_by_index('DOW JONES'),

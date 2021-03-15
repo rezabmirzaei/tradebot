@@ -35,7 +35,7 @@ class AccountManager:
             qty = math.floor(amount_to_invest / latest_adj_close)
             if qty == 0:
                 log.warn(
-                    'Cannot create orde for %s due to insufficent funds', symbol)
+                    'Cannot create order for %s due to insufficent funds', symbol)
                 return None
             take_profit = round(latest_adj_close * 1.07, 2)
             stop_loss = round(latest_adj_close * 0.97, 2)
