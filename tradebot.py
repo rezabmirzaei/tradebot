@@ -4,15 +4,17 @@ import time
 import alpaca_trade_api as tradeapi
 import schedule
 
+from autotrade.account_manager import AccountManager
 from autotrade.data_evaluator import DataEvaluator
 from autotrade.data_fetcher import DataFetcher
 from autotrade.session_handler import SessionHandler
 from autotrade.trade_executor import TradeExecutor
-from autotrade.account_manager import AccountManager
 
-logging.basicConfig(filename='tradebot.log',
-                    format='%(asctime)s %(message)s', level=logging.INFO)
-log = logging.getLogger(__name__)
+
+logging_filename_master = 'tradebot.log'
+logging.basicConfig(filename=logging_filename_master,
+                    format='%(asctime)s %(module)s.%(funcName)s %(levelname)s - %(message)s', level=logging.INFO)
+log = logging.getLogger(logging_filename_master)
 
 # Handle the session and connectivity to Alpaca
 sh = SessionHandler()
@@ -30,22 +32,6 @@ da = DataEvaluator()
 tx = TradeExecutor(sh, am)
 
 
-# TESTING
-
-log.info('Testing...')
-# stock_list = [df.stock_data('AMC')]
-stock_list = df.index_stock_data('AMC')
-evaluated_stock_list = da.evaluate_stock_list(stock_list)
-# print(evaluated_stock_list[0].stock_data_frame)
-# tx.execute_trades(evaluated_stock_list)
-
-log.info('Account info:\r\t%s', am.account_details())
-#api = sh.api()
-# print(api.list_orders())
-
-# END TESTING
-
-
 def run():
     log.info('Starting a new trading run')
     # tx.execute_trades(stock_list)
@@ -60,7 +46,7 @@ schedule.every(15).minutes.do(run)
 
 # Run periodically
 # 1. Check existing portfolio and assess positions
-#   > 1.a. Sell/close if necessary
+#   > 1.a. Sell/close if necessary, i.e. update current portfolio
 # 2. Fetch list of potential buys (algorithmic analysis, select markets/indices)
 # 3. Calculate amount to invest based on RRR and general market sentiment (AI)
 # 4. Enter positions (buy)

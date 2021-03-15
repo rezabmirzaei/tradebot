@@ -33,6 +33,8 @@ class DataFetcher:
             'ftse100': pts.get_yahoo_ticker_symbols_by_index('FTSE 100'),
             'cac40': pts.get_yahoo_ticker_symbols_by_index('CAC 40')
         }
+        # The maximum accepted price per share for a given stock to invest in
+        self.maximum_share_price = 50.00
 
     # TODO Use Alpaca.REST.get_bars
     def stock_data(self, ticker_symbol: str) -> StockData:
@@ -67,5 +69,5 @@ class DataFetcher:
                           ticker[1], str(e))
                 # Nevermind one stock failing, go for the next one
                 continue
-
+        # TODO Filter on self.maximum_share_price
         return stock_list
