@@ -16,6 +16,23 @@ class TradeExecutor():
         self.session_handler: SessionHandler = session_handler
         self.account_manager: AccountManager = account_manager
 
+    def handle_current_positions(self, open_positions: List[dict]) -> None:
+        api = self.session_handler.api()
+        for position in open_positions:
+            symbol = position.symbol
+            avg_entry_price = float(position.avg_entry_price)
+            current_price = float(position.current_price)
+            qty = int(position.qty)
+            unrealized_plpc = float(position.unrealized_plpc)
+            if unrealized_plpc > 0.07:
+                """ api.submit_order(
+                    symbol=symbol,
+                    side='sell',
+                    qty=qty,
+                    type='market',
+                    time_in_force='day'
+                ) """
+
     def execute_trades(self, stock_list: List[StockData]) -> None:
 
         # TODO NB! Check account&market conditions before trading
@@ -30,8 +47,7 @@ class TradeExecutor():
                 log.warn('Account is not eligable for further trading')
                 break
             try:
-                # TODO NB! JUST TESTING!!!
-                signal = 'buy'  # stock.signal
+                signal = stock.signal
                 symbol = str.upper(stock.ticker_symbol())
                 if signal:
                     order_details = self.account_manager.order_details(stock)
@@ -41,7 +57,7 @@ class TradeExecutor():
                             symbol=symbol,
                             side=signal,
                             qty=order_details['qty'],
-                            type='market',
+                            type='market', // limit -> then add "limit_price"
                             time_in_force='gtc',
                             order_class='bracket',
                             take_profit=dict(

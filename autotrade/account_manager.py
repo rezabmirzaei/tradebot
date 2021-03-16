@@ -1,5 +1,6 @@
 import logging
 import math
+from typing import List
 
 from autotrade.data_fetcher import StockData
 from autotrade.session_handler import SessionHandler
@@ -16,6 +17,10 @@ class AccountManager:
     def account_details(self) -> dict:
         api = self.session_handler.api()
         return api.get_account()
+
+    def open_positions(self) -> List[dict]:
+        api = self.session_handler.api()
+        return api.list_positions()
 
     def is_eligible_for_trading(self) -> bool:
         """ Assess wether or not the account is eligable for trading """
