@@ -31,7 +31,7 @@ class TradeExecutor():
 
         # 2 Sell any remaning stocks as signaled (if still on the books)
         sell_list = list(
-            filter(lambda stock: stock.signal == 'buy', stock_list))
+            filter(lambda stock: stock.signal == 'sell', stock_list))
         self.sell(sell_list)
 
         # 3 Buy stocks as signaled
