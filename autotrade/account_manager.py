@@ -13,6 +13,8 @@ class AccountManager:
     def __init__(self, session_handler: SessionHandler) -> None:
         self.session_handler: SessionHandler = session_handler
         self.RRR = 1.8  # Assumes 57% win probability
+        self.take_profit_pc = 7
+        self.stop_loss_pc = 5
 
     def account_details(self) -> dict:
         api = self.session_handler.api()
@@ -29,9 +31,13 @@ class AccountManager:
         return account.status == 'ACTIVE' and float(account.buying_power) > 1000
 
     def order_details(self, stock: StockData) -> dict:
-        """Calculate details for a given order based on current account status """
+        """ Calculate details for an order based on account status and investment strategy vaiables """
         symbol = str.upper(stock.ticker_symbol())
         signal = stock.signal
+        order_details = {
+            'symbol': symbol,
+            'signal': signal
+        }
         if signal == 'buy':
             latest_adj_close = round(
                 stock.stock_data_frame['adj close'][-1], 2)
@@ -42,24 +48,19 @@ class AccountManager:
                 log.warn(
                     'Cannot create order for %s due to insufficent funds', symbol)
                 return None
-            take_profit = round(latest_adj_close * 1.07, 2)
-            stop_loss = round(latest_adj_close * 0.97, 2)
-            order_details = {
-                'symbol': symbol,
-                'signal': signal,
-                'qty': qty,
-                'bid': latest_adj_close,
-                'take_profit': take_profit,
-                'stop_loss': stop_loss
-            }
-            log.info('Order details: %s', order_details)
-            return order_details
-        else:
-            order_details = {
-                'symbol': symbol,
-                'signal': signal
-            }
-            return order_details
+            take_profit = round(latest_adj_close *
+                                (1 + self.take_profit_pc / 100), 2)
+            stop_loss = round(latest_adj_close *
+                              (1 - self.stop_loss_pc / 100), 2)
+            order_details['qty'] = qty
+            order_details['limit'] = latest_adj_close
+            order_details['take_profit'] = take_profit
+            order_details['stop_loss'] = stop_loss
+
+        # TODO Handle sell. Iterate open positions and match with sell signals
+
+        log.info('Order details: %s', order_details)
+        return order_details
 
     def kelly_criterion(self, probability_gain: float) -> float:
         edge = 0

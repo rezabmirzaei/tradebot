@@ -33,12 +33,14 @@ tx = TradeExecutor(sh, am)
 
 
 def run():
-    log.info('Starting a new trading run')
-    # tx.execute_trades(stock_list)
+    log.info('Starting a new run')
+    # stock_list = df.index_stock_data('sp100')
+    # evaluated_stock_list = da.evaluate_stock_list(stock_list)
+    # tx.run(evaluated_stock_list)
 
 
-# Run every 15min
-schedule.every(15).minutes.do(run)
+# Run every hour
+schedule.every(1).hours.do(run)
 
 # TODO Set up properly once all basic functionality implemented
 # while True:

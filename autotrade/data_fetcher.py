@@ -30,7 +30,7 @@ class DataFetcher:
         pts = PyTickerSymbols()
         self.tickers_on_index = {
             'dow': pts.get_yahoo_ticker_symbols_by_index('DOW JONES'),
-            'sp500': pts.get_yahoo_ticker_symbols_by_index('S&P 100'),
+            'sp100': pts.get_yahoo_ticker_symbols_by_index('S&P 100'),
             'nasdaq100': pts.get_yahoo_ticker_symbols_by_index('NASDAQ 100'),
             'dax': pts.get_yahoo_ticker_symbols_by_index('DAX'),
             'ftse100': pts.get_yahoo_ticker_symbols_by_index('FTSE 100'),
