@@ -31,7 +31,7 @@ class AccountManager:
         return account.status == 'ACTIVE' and float(account.buying_power) > 1000
 
     def order_details(self, stock: StockData) -> dict:
-        """ Calculate details for an order based on account status and investment strategy vaiables """
+        """ Calculate details for an order based on account status and strategy variables """
         symbol = str.upper(stock.ticker_symbol())
         signal = stock.signal
         order_details = {
