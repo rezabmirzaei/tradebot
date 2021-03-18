@@ -33,10 +33,13 @@ tx = TradeExecutor(sh, am)
 
 
 def run():
-    log.info('Starting a new run')
-    # stock_list = df.index_stock_data('sp100')
-    # evaluated_stock_list = da.evaluate_stock_list(stock_list)
-    # tx.run(evaluated_stock_list)
+    api = sh.api()
+    clock = api.get_clock()
+    if clock.is_open:
+        log.info('Starting a new run')
+        # stock_list = df.index_stock_data('sp100')
+        # evaluated_stock_list = da.evaluate_stock_list(stock_list)
+        # tx.run(evaluated_stock_list)
 
 
 # Run every hour
