@@ -1,4 +1,5 @@
 import logging
+import math
 from typing import List
 
 import alpaca_trade_api as tradeapi
@@ -10,6 +11,7 @@ from autotrade.session_handler import SessionHandler
 log = logging.getLogger('tradebot.log')
 
 
+# TODO Handle market close/open (or near close) for all moves
 class TradeExecutor():
 
     def __init__(self, session_handler: SessionHandler, account_manager: AccountManager) -> None:
@@ -18,8 +20,8 @@ class TradeExecutor():
 
     def run(self, stock_list: List[StockData]) -> None:
 
-        # TODO NB! Check account&market conditions before trading
-        # E.g. PDT, market open etc. Notify if issues (email/sms)
+        # TODO Notify if issues (email/sms)
+        # Check more conditions, e.g. PDT, market open etc.
         if not self.account_manager.is_eligible_for_trading():
             log.warn('Account is not eligable for trading')
             return
@@ -62,9 +64,34 @@ class TradeExecutor():
             log.info('No open positions to update')
 
     def sell(self, sell_list: List[StockData]) -> None:
-        log.info('Selling stocks as signaled')
-        # TODO sell_list must be filtered to match whatever remains in open positions
-        pass
+        if sell_list:
+            open_positions = self.account_manager.open_positions()
+            if open_positions:
+                api = self.session_handler.api()
+                for stock_to_sell in sell_list:
+                    signal = stock_to_sell.signal
+                    symbol = str.upper(stock_to_sell.ticker_symbol())
+                    # Safeguard agains wrongful data
+                    if signal != 'sell':
+                        log.warn('Signal was %s for %s, expected sell',
+                                 signal, symbol)
+                        continue
+                    for position in open_positions:
+                        if position.symbol == symbol:
+                            log.info(
+                                'Closing (selling) open position on %s (qty:%s)', symbol, qty)
+                            qty = int(position.qty)
+                            api.submit_order(
+                                symbol=symbol,
+                                side='sell',
+                                qty=qty,
+                                type='market',
+                                time_in_force='day'
+                            )
+            else:
+                log.info('No open positions to close (sell)')
+        else:
+            log.info('Nothing to sell')
 
     def buy(self, buy_list: List[StockData]) -> None:
         if buy_list:
@@ -72,18 +99,20 @@ class TradeExecutor():
             api = self.session_handler.api()
             for stock in buy_list:
                 signal = stock.signal
+                symbol = str.upper(stock.ticker_symbol())
                 # Safeguard agains wrongful data
                 if signal != 'buy':
-                    log.warn('Signal was %s, not as expected (buy)', signal)
+                    log.warn('Signal was %s for %s, expected buy',
+                             signal, symbol)
                     continue
                 # Check eligibility before each attempted trade
                 # Conditions may have changed since last order was put
+                # TODO Make sure market isn't near close
                 if not self.account_manager.is_eligible_for_trading():
                     log.warn('Account is not eligable for further trading')
                     break
                 try:
-                    symbol = str.upper(stock.ticker_symbol())
-                    order_details = self.account_manager.order_details(stock)
+                    order_details = self.__buy_order_details(stock)
                     if order_details:
                         log.info('Buying %s. Order details: %s',
                                  symbol, order_details)
@@ -105,4 +134,31 @@ class TradeExecutor():
                     log.error('Error placing buy order: %s', str(e))
                     continue
         else:
-            log.info('Nothing to buy...')
+            log.info('Nothing to buy')
+
+    def __buy_order_details(self, stock: StockData) -> dict:
+        symbol = str.upper(stock.ticker_symbol())
+        latest_adj_close = round(stock.stock_data_frame['adj close'][-1], 2)
+        investment_pc = self.account_manager.investment_pc
+        take_profit_pc = self.account_manager.take_profit_pc
+        stop_loss_pc = self.account_manager.stop_loss_pc
+        account_details = self.account_manager.account_details()
+        buying_power = float(account_details.buying_power)
+        amount_to_invest = buying_power * (investment_pc / 100)
+        qty = math.floor(amount_to_invest / latest_adj_close)
+        if qty == 0:
+            log.warn(
+                'Cannot create order for %s due to insufficent funds', symbol)
+            return None
+        take_profit = round(latest_adj_close *
+                            (1 + take_profit_pc / 100), 2)
+        stop_loss = round(latest_adj_close *
+                          (1 - stop_loss_pc / 100), 2)
+        order_details = {
+            'symbol': stock.ticker_symbol(),
+            'qty': qty,
+            'limit': latest_adj_close,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss
+        }
+        return order_details
