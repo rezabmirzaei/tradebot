@@ -1,5 +1,7 @@
 from stockstats import StockDataFrame
 
+# Temporary. Necessary indicators will be part of separate project that writes analysed/evaluated data to DB for bot to access.
+
 
 class Indicators:
 

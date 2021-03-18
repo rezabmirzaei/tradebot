@@ -7,6 +7,8 @@ from pytickersymbols import PyTickerSymbols
 from stockstats import StockDataFrame
 from yfinance import Ticker
 
+### Temporary. Once ready, data will be fetched from DB containing analysed and updated data.
+
 log = logging.getLogger('tradebot.log')
 
 

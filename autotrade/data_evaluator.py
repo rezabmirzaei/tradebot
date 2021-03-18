@@ -5,6 +5,8 @@ from stockstats import StockDataFrame
 from autotrade.data_fetcher import StockData
 from autotrade.indicators import Indicators
 
+# Temporary. Evaluation is performed in separate project that writes data to DB for bot to access.
+
 
 class DataEvaluator:
 
