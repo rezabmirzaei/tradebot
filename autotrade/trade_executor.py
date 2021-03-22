@@ -50,7 +50,7 @@ class TradeExecutor():
                 symbol = position.symbol
                 qty = int(position.qty)
                 unrealized_plpc = float(position.unrealized_plpc)
-                # TODO Properly consider this condition
+                # TODO Consider this condition
                 if unrealized_plpc > (self.account_manager.take_profit_pc / 100):
                     log.info('Selling %s shares of %s', qty, symbol)
                     api.submit_order(
@@ -95,8 +95,8 @@ class TradeExecutor():
 
     def buy(self, buy_list: List[StockData]) -> None:
         if buy_list:
-            # TODO Check if already holding positions on given stock
             log.info('Buying stocks as signaled')
+            open_positions = self.account_manager.open_positions()
             api = self.session_handler.api()
             for stock in buy_list:
                 signal = stock.signal
@@ -113,24 +113,31 @@ class TradeExecutor():
                     log.warn('Account is not eligable for further trading')
                     break
                 try:
-                    order_details = self.__buy_order_details(stock)
-                    if order_details:
-                        log.info('Buying %s. Order details: %s',
-                                 symbol, order_details)
-                        api.submit_order(
-                            symbol=symbol,
-                            side=signal,
-                            qty=order_details['qty'],
-                            type='market',
-                            time_in_force='gtc',
-                            order_class='bracket',
-                            take_profit=dict(
-                                limit_price=order_details['take_profit']
-                            ),
-                            stop_loss=dict(
-                                stop_price=order_details['stop_loss']
-                            )
-                        )
+                    for position in open_positions:
+                        # TODO Consider this condition
+                        # Don't buy any more if already holding position
+                        if not position.symbol == symbol:
+                            order_details = self.__buy_order_details(stock)
+                            if order_details:
+                                log.info('Buying %s. Order details: %s',
+                                         symbol, order_details)
+                                api.submit_order(
+                                    symbol=symbol,
+                                    side=signal,
+                                    qty=order_details['qty'],
+                                    type='market',
+                                    time_in_force='gtc',
+                                    order_class='bracket',
+                                    take_profit=dict(
+                                        limit_price=order_details['take_profit']
+                                    ),
+                                    stop_loss=dict(
+                                        stop_price=order_details['stop_loss']
+                                    )
+                                )
+                        else:
+                            log.warn(
+                                'Already holding position on %s, will not buy more', symbol)
                 except Exception as e:
                     log.error('Error placing buy order: %s', str(e))
                     continue

@@ -7,7 +7,7 @@ from pytickersymbols import PyTickerSymbols
 from stockstats import StockDataFrame
 from yfinance import Ticker
 
-### Temporary. Once ready, data will be fetched from DB containing analysed and updated data.
+# Temporary. Once ready, data will be fetched from DB containing analysed and updated data.
 
 log = logging.getLogger('tradebot.log')
 
@@ -23,14 +23,6 @@ class StockData:
     def ticker_symbol(self) -> str:
         """ Utility method """
         return self.ticker.info['symbol']
-    
-    def buy_signals(self) -> List[StockData]:
-        # TODO Get data from DB, map to StockData obj
-        pass
-
-    def sell_signals(self) -> List[StockData]:
-        # TODO Get data from DB, map to StockData obj
-        pass
 
 
 class DataFetcher:
@@ -49,7 +41,14 @@ class DataFetcher:
         # The maximum accepted price per share for a given stock to invest in
         self.maximum_share_price = 50.00
 
-    # TODO Use Alpaca.REST.get_bars
+    def buy_signals(self) -> List[StockData]:
+        # TODO Get data from DB, map to StockData obj
+        pass
+
+    def sell_signals(self) -> List[StockData]:
+        # TODO Get data from DB, map to StockData obj
+        pass
+
     def stock_data(self, ticker_symbol: str) -> StockData:
         sdf = StockDataFrame()
         ticker = yf.Ticker(ticker_symbol)
