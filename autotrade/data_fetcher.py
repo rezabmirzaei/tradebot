@@ -23,6 +23,14 @@ class StockData:
     def ticker_symbol(self) -> str:
         """ Utility method """
         return self.ticker.info['symbol']
+    
+    def buy_signals(self) -> List[StockData]:
+        # TODO Get data from DB, map to StockData obj
+        pass
+
+    def sell_signals(self) -> List[StockData]:
+        # TODO Get data from DB, map to StockData obj
+        pass
 
 
 class DataFetcher:

@@ -37,23 +37,18 @@ def run():
     clock = api.get_clock()
     if clock.is_open:
         log.info('Starting a new run')
-        # stock_list = df.index_stock_data('sp100')
-        # evaluated_stock_list = da.evaluate_stock_list(stock_list)
-        # tx.run(evaluated_stock_list)
+        stock_list = df.index_stock_data('nasdaq100')
+        evaluated_stock_list = da.evaluate_stock_list(stock_list)
+        tx.run(evaluated_stock_list)
+    else:
+        log.info('Marked is closed, waiting')
 
 
+# TODO Need better way to schedule this and handle market hours
 # Run every hour
+# TODO Run more often once data is fetched from DB (and updated by external process)
 schedule.every(1).hours.do(run)
 
-# TODO Set up properly once all basic functionality implemented
-# while True:
-# schedule.run_pending()
-
-# Run periodically
-# 1. Check existing portfolio and assess positions
-#   > 1.a. Sell/close if necessary, i.e. update current portfolio
-# 2. Fetch list of potential buys (algorithmic analysis, select markets/indices)
-# 3. Calculate amount to invest based on RRR and general market sentiment (AI)
-# 4. Enter positions (buy)
-#  > 4.a. Handle stop-loss/TPO etc
-# 5 Repeat
+if __name__ == '__main__':
+    while True:
+        schedule.run_pending()

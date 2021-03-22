@@ -95,6 +95,7 @@ class TradeExecutor():
 
     def buy(self, buy_list: List[StockData]) -> None:
         if buy_list:
+            # TODO Check if already holding positions on given stock
             log.info('Buying stocks as signaled')
             api = self.session_handler.api()
             for stock in buy_list:

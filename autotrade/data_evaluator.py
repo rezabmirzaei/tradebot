@@ -6,6 +6,7 @@ from autotrade.data_fetcher import StockData
 from autotrade.indicators import Indicators
 
 # Temporary. Evaluation is performed in separate project that writes data to DB for bot to access.
+# See data_fetcher.buy_signals and data_fetcher_sell_signals
 
 
 class DataEvaluator:
