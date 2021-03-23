@@ -3,6 +3,7 @@ import math
 from typing import List
 
 import alpaca_trade_api as tradeapi
+from alpaca_trade_api.rest import Position
 
 from autotrade.account_manager import AccountManager
 from autotrade.data_fetcher import StockData
@@ -32,13 +33,15 @@ class TradeExecutor():
         self.update_positions()
 
         # 2 Sell any remaning stocks as signaled (if still on the books)
-        sell_list = list(
-            filter(lambda stock: stock.signal == 'sell', stock_list))
-        self.sell(sell_list)
+        open_positions = self.account_manager.open_positions()
+        sell_positions = [i for i, j in zip(open_positions, stock_list) if (
+            j.signal == 'sell' and i.symbol == j.ticker_symbol())]
+        self.sell(sell_positions)
 
-        # 3 Buy stocks as signaled
-        buy_list = list(
-            filter(lambda stock: stock.signal == 'buy', stock_list))
+        # 3 Buy stocks as signaled (only if not already holding)
+        open_positions = self.account_manager.open_positions()
+        buy_list = [i for i, j in zip(stock_list, open_positions) if (
+            i.signal == 'buy' and i.ticker_symbol() != j.symbol)]
         self.buy(buy_list)
 
     def update_positions(self) -> None:
@@ -63,49 +66,31 @@ class TradeExecutor():
         else:
             log.info('No open positions to update')
 
-    def sell(self, sell_list: List[StockData]) -> None:
-        if sell_list:
-            open_positions = self.account_manager.open_positions()
-            if open_positions:
-                api = self.session_handler.api()
-                for stock_to_sell in sell_list:
-                    signal = stock_to_sell.signal
-                    symbol = str.upper(stock_to_sell.ticker_symbol())
-                    # Safeguard agains wrongful data
-                    if signal != 'sell':
-                        log.warn('Signal was %s for %s, expected sell',
-                                 signal, symbol)
-                        continue
-                    for position in open_positions:
-                        if position.symbol == symbol:
-                            log.info(
-                                'Closing (selling) open position on %s (qty:%s)', symbol, qty)
-                            qty = int(position.qty)
-                            api.submit_order(
-                                symbol=symbol,
-                                side='sell',
-                                qty=qty,
-                                type='market',
-                                time_in_force='day'
-                            )
-            else:
-                log.info('No open positions to close (sell)')
+    def sell(self, sell_positions: List[Position]) -> None:
+        if sell_positions:
+            api = self.session_handler.api()
+            for position in sell_positions:
+                symbol = position.symbol
+                qty = int(position.qty)
+                log.info(
+                    'Closing (selling) open position on %s (qty:%s)', symbol, qty)
+                api.submit_order(
+                    symbol=symbol,
+                    side='sell',
+                    qty=qty,
+                    type='market',
+                    time_in_force='day'
+                )
         else:
             log.info('Nothing to sell')
 
     def buy(self, buy_list: List[StockData]) -> None:
         if buy_list:
             log.info('Buying stocks as signaled')
-            open_positions = self.account_manager.open_positions()
             api = self.session_handler.api()
             for stock in buy_list:
                 signal = stock.signal
                 symbol = str.upper(stock.ticker_symbol())
-                # Safeguard agains wrongful data
-                if signal != 'buy':
-                    log.warn('Signal was %s for %s, expected buy',
-                             signal, symbol)
-                    continue
                 # Check eligibility before each attempted trade
                 # Conditions may have changed since last order was put
                 # TODO Make sure market isn't near close
@@ -113,31 +98,24 @@ class TradeExecutor():
                     log.warn('Account is not eligable for further trading')
                     break
                 try:
-                    for position in open_positions:
-                        # TODO Consider this condition
-                        # Don't buy any more if already holding position
-                        if not position.symbol == symbol:
-                            order_details = self.__buy_order_details(stock)
-                            if order_details:
-                                log.info('Buying %s. Order details: %s',
-                                         symbol, order_details)
-                                api.submit_order(
-                                    symbol=symbol,
-                                    side=signal,
-                                    qty=order_details['qty'],
-                                    type='market',
-                                    time_in_force='gtc',
-                                    order_class='bracket',
-                                    take_profit=dict(
-                                        limit_price=order_details['take_profit']
-                                    ),
-                                    stop_loss=dict(
-                                        stop_price=order_details['stop_loss']
-                                    )
-                                )
-                        else:
-                            log.warn(
-                                'Already holding position on %s, will not buy more', symbol)
+                    order_details = self.__buy_order_details(stock)
+                    if order_details:
+                        log.info('Buying %s. Order details: %s',
+                                 symbol, order_details)
+                        api.submit_order(
+                            symbol=symbol,
+                            side=signal,
+                            qty=order_details['qty'],
+                            type='market',
+                            time_in_force='gtc',
+                            order_class='bracket',
+                            take_profit=dict(
+                                limit_price=order_details['take_profit']
+                            ),
+                            stop_loss=dict(
+                                stop_price=order_details['stop_loss']
+                            )
+                        )
                 except Exception as e:
                     log.error('Error placing buy order: %s', str(e))
                     continue
