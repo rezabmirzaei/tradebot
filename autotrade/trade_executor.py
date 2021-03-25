@@ -29,8 +29,8 @@ class TradeExecutor():
         log.info('Running trades')
 
         # 1 Update current status of portfolio, sell if certain conditions are met
-        sell_list = [stock for stock in stock_list if (
-            stock['advice'] == 'SELL')]
+        sell_list = [
+            stock for stock in stock_list if stock['advice'] == 'SELL']
         self.update_positions(sell_list)
 
         # Wait 1 min from updating before proceeding to buy
@@ -45,7 +45,7 @@ class TradeExecutor():
             stock['advice'] == 'BUY')]
         if open_positions:
             buy_list = [stock for stock, open_pos in zip(
-                buy_list, open_positions) if (stock['ticker'] != open_pos.symbol)]
+                buy_list, open_positions) if stock['ticker'] != open_pos.symbol]
         self.buy(buy_list)
 
     def update_positions(self, sell_list: List[dict]) -> None:

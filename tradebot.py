@@ -10,7 +10,6 @@ from autotrade.session_handler import SessionHandler
 from autotrade.trade_executor import TradeExecutor
 
 
-
 logging_filename_master = 'tradebot.log'
 logging.basicConfig(filename=logging_filename_master,
                     format='%(asctime)s %(module)s.%(funcName)s %(levelname)s - %(message)s', level=logging.INFO)
