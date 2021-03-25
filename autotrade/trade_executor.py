@@ -43,13 +43,24 @@ class TradeExecutor():
         open_positions = self.account_manager.open_positions()
         buy_list = [stock for stock in stock_list if (
             stock['advice'] == 'BUY')]
+        # TODO Write a function for this
         if open_positions:
-            buy_list = [stock for stock, open_pos in zip(
-                buy_list, open_positions) if stock['ticker'] != open_pos.symbol]
-        self.buy(buy_list)
+            filtered_buy = []
+            for stock in buy_list:
+                holding_pos = False
+                for pos in open_positions:
+                    if stock['ticker'] == pos.symbol:
+                        holding_pos = True
+                        continue
+                if not holding_pos:
+                    filtered_buy.append(stock)
+            self.buy(filtered_buy)
+        else:
+            self.buy(buy_list)
 
     def update_positions(self, sell_list: List[dict]) -> None:
         open_positions = self.account_manager.open_positions()
+        # TODO FIX THIS FILTER!!! Stupid thing doesn't work!!!
         sell_positions = [pos for pos, stock in zip(open_positions, sell_list) if (
             stock['advice'] == 'SELL' and pos.symbol == stock['ticker'])]
         if open_positions:
