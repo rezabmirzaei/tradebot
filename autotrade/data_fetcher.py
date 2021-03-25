@@ -31,6 +31,7 @@ class DataFetcher:
         """
         api_data = []
         for index in self.index_list:
+            log.info('Getting stock information for index %s', index)
             api_response = requests.get(self.base_url + index)
             data = json.loads(api_response.text)
             api_data.extend(data['stocks'])
