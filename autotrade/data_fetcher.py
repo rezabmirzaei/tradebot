@@ -39,5 +39,4 @@ class DataFetcher:
         # The data to trade on, filter only for stocks with buy or sell signal
         stock_data_to_trade_on = [stock for stock in deduped_stock_list if (
             stock['advice'] == 'BUY' or stock['advice'] == 'SELL')]
-        print(len(stock_data_to_trade_on))
         return stock_data_to_trade_on
