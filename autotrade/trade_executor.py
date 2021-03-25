@@ -84,7 +84,7 @@ class TradeExecutor():
             log.info('Buying stocks as signaled')
             api = self.session_handler.api()
             for stock in buy_list:
-                signal = stock['advice']
+                signal = str.lower(stock['advice'])
                 symbol = stock['ticker']
                 # Check eligibility before each attempted trade
                 # Conditions may have changed since last order was put
