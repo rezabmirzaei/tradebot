@@ -1,25 +1,24 @@
 import logging
 import math
+import time
 from typing import List
 
 import alpaca_trade_api as tradeapi
-from alpaca_trade_api.rest import Position
+import yfinance as yf
 
 from autotrade.account_manager import AccountManager
-from autotrade.data_fetcher import StockData
 from autotrade.session_handler import SessionHandler
 
 log = logging.getLogger('tradebot.log')
 
 
-# TODO Handle market close/open (or near close) for all moves
 class TradeExecutor():
 
     def __init__(self, session_handler: SessionHandler, account_manager: AccountManager) -> None:
         self.session_handler: SessionHandler = session_handler
         self.account_manager: AccountManager = account_manager
 
-    def run(self, stock_list: List[StockData]) -> None:
+    def run(self, stock_list: List[dict]) -> None:
 
         # TODO Notify if issues (email/sms)
         # Check more conditions, e.g. PDT, market open etc.
@@ -29,23 +28,30 @@ class TradeExecutor():
 
         log.info('Running trades')
 
-        # 1 Update current status of portfolio
-        self.update_positions()
+        # 1 Update current status of portfolio, sell if certain conditions are met
+        sell_list = [stock for stock in stock_list if (
+            stock['advice'] == 'SELL')]
+        self.update_positions(sell_list)
 
-        # 2 Sell any remaning stocks as signaled (if still on the books)
-        open_positions = self.account_manager.open_positions()
-        sell_positions = [i for i, j in zip(open_positions, stock_list) if (
-            j.signal == 'sell' and i.symbol == j.ticker_symbol())]
-        self.sell(sell_positions)
+        # Wait 1 min from updating before proceeding to buy
+        time_to_sleep = 60
+        log.info(
+            'Done updating positions, waiting %s seconds...', time_to_sleep)
+        time.sleep(time_to_sleep)
 
-        # 3 Buy stocks as signaled (only if not already holding)
+        # 2 Buy stocks as signaled (only if not already holding)
         open_positions = self.account_manager.open_positions()
-        buy_list = [i for i, j in zip(stock_list, open_positions) if (
-            i.signal == 'buy' and i.ticker_symbol() != j.symbol)]
+        buy_list = [stock for stock in stock_list if (
+            stock['advice'] == 'BUY')]
+        if open_positions:
+            buy_list = [stock for stock, open_pos in zip(
+                buy_list, open_positions) if (stock['ticker'] != open_pos.symbol)]
         self.buy(buy_list)
 
-    def update_positions(self) -> None:
+    def update_positions(self, sell_list: List[dict]) -> None:
         open_positions = self.account_manager.open_positions()
+        sell_positions = [pos for pos, stock in zip(open_positions, sell_list) if (
+            stock['advice'] == 'SELL' and pos.symbol == stock['ticker'])]
         if open_positions:
             log.info('Updating current positions')
             api = self.session_handler.api()
@@ -53,44 +59,33 @@ class TradeExecutor():
                 symbol = position.symbol
                 qty = int(position.qty)
                 unrealized_plpc = float(position.unrealized_plpc)
-                # TODO Consider this condition
-                if unrealized_plpc > (self.account_manager.take_profit_pc / 100):
-                    log.info('Selling %s shares of %s', qty, symbol)
-                    api.submit_order(
-                        symbol=symbol,
-                        side='sell',
-                        qty=qty,
-                        type='market',
-                        time_in_force='day'
-                    )
+                # TODO Consider this condition, handle different scenarios
+                # if unrealized_plpc > (self.account_manager.take_profit_pc / 100):
+                # TODO Get all open orders related to current open position and handle them
+                # TODO TESTING only
+                if position in sell_positions or (unrealized_plpc >= 0.07 or unrealized_plpc <= -0.05):
+                    log.info('Selling %s shares of %s (profit: %s)',
+                             qty, symbol, unrealized_plpc)
+                    try:
+                        api.submit_order(
+                            symbol=symbol,
+                            side='sell',
+                            qty=qty,
+                            type='market',
+                            time_in_force='day')
+                    except Exception as e:
+                        log.error('Error placing sell order: %s', str(e))
+                        continue
         else:
             log.info('No open positions to update')
 
-    def sell(self, sell_positions: List[Position]) -> None:
-        if sell_positions:
-            api = self.session_handler.api()
-            for position in sell_positions:
-                symbol = position.symbol
-                qty = int(position.qty)
-                log.info(
-                    'Closing (selling) open position on %s (qty:%s)', symbol, qty)
-                api.submit_order(
-                    symbol=symbol,
-                    side='sell',
-                    qty=qty,
-                    type='market',
-                    time_in_force='day'
-                )
-        else:
-            log.info('Nothing to sell')
-
-    def buy(self, buy_list: List[StockData]) -> None:
+    def buy(self, buy_list: List[dict]) -> None:
         if buy_list:
             log.info('Buying stocks as signaled')
             api = self.session_handler.api()
             for stock in buy_list:
-                signal = stock.signal
-                symbol = str.upper(stock.ticker_symbol())
+                signal = stock['advice']
+                symbol = stock['ticker']
                 # Check eligibility before each attempted trade
                 # Conditions may have changed since last order was put
                 # TODO Make sure market isn't near close
@@ -122,9 +117,10 @@ class TradeExecutor():
         else:
             log.info('Nothing to buy')
 
-    def __buy_order_details(self, stock: StockData) -> dict:
-        symbol = str.upper(stock.ticker_symbol())
-        latest_adj_close = round(stock.stock_data_frame['adj close'][-1], 2)
+    def __buy_order_details(self, stock: dict) -> dict:
+        symbol = stock['ticker']
+        stock_info = yf.download(symbol, period='2min')
+        latest_adj_close = round(stock_info['Adj Close'][-1], 2)
         investment_pc = self.account_manager.investment_pc
         take_profit_pc = self.account_manager.take_profit_pc
         stop_loss_pc = self.account_manager.stop_loss_pc
@@ -141,7 +137,7 @@ class TradeExecutor():
         stop_loss = round(latest_adj_close *
                           (1 - stop_loss_pc / 100), 2)
         order_details = {
-            'symbol': stock.ticker_symbol(),
+            'symbol': symbol,
             'qty': qty,
             'limit': latest_adj_close,
             'take_profit': take_profit,

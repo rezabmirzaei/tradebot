@@ -1,6 +1,6 @@
 # Configuration
-config/paper_account_config.ini
-config/live_account_config.ini
+config/prod_config.ini
+config/test_config.ini
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,85 +1,43 @@
+import json
 import logging
+from configparser import ConfigParser
+from os import environ
 from typing import List
 
-import pandas as pd
-import yfinance as yf
-from pytickersymbols import PyTickerSymbols
-from stockstats import StockDataFrame
-from yfinance import Ticker
-
-# Temporary. Once ready, data will be fetched from DB containing analysed and updated data.
+import requests
 
 log = logging.getLogger('tradebot.log')
-
-
-class StockData:
-
-    def __init__(self, ticker: Ticker, stock_data_frame: StockDataFrame, signal: str) -> None:
-        """ The stock info and data element to perform all other operations on """
-        self.ticker: Ticker = ticker
-        self.stock_data_frame: StockDataFrame = stock_data_frame
-        self.signal: str = signal
-
-    def ticker_symbol(self) -> str:
-        """ Utility method """
-        return self.ticker.info['symbol']
 
 
 class DataFetcher:
 
     def __init__(self) -> None:
-        """ Fetch data on a single stock or a list of stocks from configured sources """
-        pts = PyTickerSymbols()
-        self.tickers_on_index = {
-            'dow': pts.get_yahoo_ticker_symbols_by_index('DOW JONES'),
-            'sp100': pts.get_yahoo_ticker_symbols_by_index('S&P 100'),
-            'nasdaq100': pts.get_yahoo_ticker_symbols_by_index('NASDAQ 100'),
-            'dax': pts.get_yahoo_ticker_symbols_by_index('DAX'),
-            'ftse100': pts.get_yahoo_ticker_symbols_by_index('FTSE 100'),
-            'cac40': pts.get_yahoo_ticker_symbols_by_index('CAC 40')
-        }
-        # The maximum accepted price per share for a given stock to invest in
-        self.maximum_share_price = 50.00
+        config = ConfigParser()
+        config_file_path = 'config/prod_config.ini' if environ.get(
+            'ENVIRONMENT') == 'PROD' else 'config/test_config.ini'
+        config.read(config_file_path)
+        self.base_url = config.get('DATA_API', 'base_url')
+        # List of indexes to get stock data from for trading
+        self.index_list = ['dow', 'nasdaq100', 'sp500']
 
-    def buy_signals(self) -> List[StockData]:
-        # TODO Get data from DB, map to StockData obj
-        pass
-
-    def sell_signals(self) -> List[StockData]:
-        # TODO Get data from DB, map to StockData obj
-        pass
-
-    def stock_data(self, ticker_symbol: str) -> StockData:
-        sdf = StockDataFrame()
-        ticker = yf.Ticker(ticker_symbol)
-        stock_info = yf.download(ticker_symbol, period='3mo')
-        stock_data_frame = sdf.retype(pd.DataFrame(
-            stock_info[['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']]))
-        return StockData(ticker, stock_data_frame, None)
-
-    def index_stock_data(self, index_symbol: str) -> List[StockData]:
-
-        index_symbol_lower = str.lower(index_symbol)
-        all_ticker_symbols_on_index = []
-        try:
-            all_ticker_symbols_on_index = list(
-                self.tickers_on_index[index_symbol_lower])
-        except KeyError as e:
-            log.error('Could not get tickers for index %s\r%s',
-                      index_symbol_lower, str(e))
-            return
-
-        log.info('Getting information for stocks on index %s',
-                 index_symbol_lower)
-
-        stock_list: List[StockData] = []
-        for ticker in all_ticker_symbols_on_index:
-            try:
-                stock_list.append(self.stock_data(ticker[1]))
-            except Exception as e:
-                log.error('Could not get info for stock %s\r%s',
-                          ticker[1], str(e))
-                # Nevermind one stock failing, go for the next one
-                continue
-        # TODO Filter on self.maximum_share_price
-        return stock_list
+    def stock_data_to_trade_on(self) -> List[dict]:
+        """
+        API return list of stock in JSON-format, where each element in list is structured as:
+            {
+                "ticker":"...",
+                "advice":"...",
+                "valuation":"..."
+            }
+        """
+        api_data = []
+        for index in self.index_list:
+            api_response = requests.get(self.base_url + index)
+            data = json.loads(api_response.text)
+            api_data.extend(data['stocks'])
+        # Remove duplicates
+        deduped_stock_list = {each['ticker']: each for each in api_data}.values()
+        # The data to trade on, filter only for stocks with buy or sell signal
+        stock_data_to_trade_on = [stock for stock in deduped_stock_list if (
+            stock['advice'] == 'BUY' or stock['advice'] == 'SELL')]
+        print(len(stock_data_to_trade_on))
+        return stock_data_to_trade_on

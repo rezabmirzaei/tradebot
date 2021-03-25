@@ -1,5 +1,2 @@
 alpaca_trade_api>=0.52.0
-pytickersymbols>=1.1.14
 yfinance>=0.1.55
-stockstats>=0.3.2
-requests-html>=0.10.0
