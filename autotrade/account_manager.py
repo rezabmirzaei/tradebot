@@ -15,9 +15,9 @@ class AccountManager:
         
         # TODO TESTIN ONLY!!! Set at 7 and 5 % respectivly
         # Take profit at 7%
-        self.take_profit_pc = 2
+        self.take_profit_pc = 4
         # Cover losses at 5%
-        self.stop_loss_pc = 1
+        self.stop_loss_pc = 2
 
     def account_details(self) -> dict:
         api = self.session_handler.api()

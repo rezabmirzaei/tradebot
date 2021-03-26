@@ -31,6 +31,7 @@ class TradeExecutor():
         # 1 Update current status of portfolio, sell if certain conditions are met
         sell_list = [
             stock for stock in stock_list if stock['advice'] == 'SELL']
+        sell_list = self.__filter_stocks_against_positions(sell_list, True)
         self.update_positions(sell_list)
 
         # Wait 1 min from updating before proceeding to buy
@@ -40,29 +41,14 @@ class TradeExecutor():
         time.sleep(time_to_sleep)
 
         # 2 Buy stocks as signaled (only if not already holding)
-        open_positions = self.account_manager.open_positions()
         buy_list = [stock for stock in stock_list if (
             stock['advice'] == 'BUY')]
-        # TODO Write a function for this
-        if open_positions:
-            filtered_buy = []
-            for stock in buy_list:
-                holding_pos = False
-                for pos in open_positions:
-                    if stock['ticker'] == pos.symbol:
-                        holding_pos = True
-                        continue
-                if not holding_pos:
-                    filtered_buy.append(stock)
-            self.buy(filtered_buy)
-        else:
-            self.buy(buy_list)
+        buy_list = self.__filter_stocks_against_positions(buy_list, False)
+        # TODO must filter against standing orders also!
+        self.buy(buy_list)
 
     def update_positions(self, sell_list: List[dict]) -> None:
         open_positions = self.account_manager.open_positions()
-        # TODO FIX THIS FILTER!!! Stupid thing doesn't work!!!
-        sell_positions = [pos for pos, stock in zip(open_positions, sell_list) if (
-            stock['advice'] == 'SELL' and pos.symbol == stock['ticker'])]
         if open_positions:
             log.info('Updating current positions')
             api = self.session_handler.api()
@@ -70,11 +56,12 @@ class TradeExecutor():
                 symbol = position.symbol
                 qty = int(position.qty)
                 unrealized_plpc = float(position.unrealized_plpc)
-                # TODO Consider this condition, handle different scenarios
-                # if unrealized_plpc > (self.account_manager.take_profit_pc / 100):
-                # TODO Get all open orders related to current open position and handle them
-                # TODO TESTING only
-                if position in sell_positions or (unrealized_plpc >= 0.07 or unrealized_plpc <= -0.05):
+                sell_signal = False
+                for stock in sell_list:
+                    if stock['ticker'] == symbol:
+                        sell_signal = True
+                    break
+                if sell_signal or (unrealized_plpc >= (self.account_manager.take_profit_pc / 100) or unrealized_plpc <= -(self.account_manager.stop_loss_pc / 100)):
                     log.info('Selling %s shares of %s (profit: %s)',
                              qty, symbol, unrealized_plpc)
                     try:
@@ -127,6 +114,25 @@ class TradeExecutor():
                     continue
         else:
             log.info('Nothing to buy')
+
+    def __filter_stocks_against_positions(self, stock_list: List[dict], holding_position: bool) -> List[dict]:
+        """
+        Check wether or not position for a stock in a list is held in current portfolio
+        """
+        open_positions = self.account_manager.open_positions()
+        if open_positions:
+            filtered_list = []
+            for stock in stock_list:
+                holding_pos = holding_position
+                for pos in open_positions:
+                    if stock['ticker'] == pos.symbol:
+                        holding_pos = not holding_pos
+                        continue
+                if not holding_pos:
+                    filtered_list.append(stock)
+            return filtered_list
+        else:
+            return stock_list
 
     def __buy_order_details(self, stock: dict) -> dict:
         symbol = stock['ticker']

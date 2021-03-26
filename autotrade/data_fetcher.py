@@ -35,7 +35,7 @@ class DataFetcher:
             api_response = requests.get(self.base_url + index)
             data = json.loads(api_response.text)
             api_data.extend(data['stocks'])
-        # Remove duplicates
+        # Remove duplicates (a company may be listen on multiple indexes)
         deduped_stock_list = {each['ticker']: each for each in api_data}.values()
         # The data to trade on, filter only for stocks with buy or sell signal
         stock_data_to_trade_on = [stock for stock in deduped_stock_list if (
