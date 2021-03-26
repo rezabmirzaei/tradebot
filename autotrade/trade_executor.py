@@ -44,7 +44,6 @@ class TradeExecutor():
         buy_list = [stock for stock in stock_list if (
             stock['advice'] == 'BUY')]
         buy_list = self.__filter_stocks_against_positions(buy_list, False)
-        # TODO must filter against standing orders also!
         self.buy(buy_list)
 
     def update_positions(self, sell_list: List[dict]) -> None:
@@ -61,6 +60,7 @@ class TradeExecutor():
                     if stock['ticker'] == symbol:
                         sell_signal = True
                     break
+                # TODO Must handle potential holding orders before selling
                 if sell_signal or (unrealized_plpc >= (self.account_manager.take_profit_pc / 100) or unrealized_plpc <= -(self.account_manager.stop_loss_pc / 100)):
                     log.info('Selling %s shares of %s (profit: %s)',
                              qty, symbol, unrealized_plpc)
@@ -81,37 +81,48 @@ class TradeExecutor():
         if buy_list:
             log.info('Buying stocks as signaled')
             api = self.session_handler.api()
+            current_orders = api.list_orders()
             for stock in buy_list:
                 signal = str.lower(stock['advice'])
                 symbol = stock['ticker']
                 # Check eligibility before each attempted trade
                 # Conditions may have changed since last order was put
-                # TODO Make sure market isn't near close
                 if not self.account_manager.is_eligible_for_trading():
                     log.warn('Account is not eligable for further trading')
                     break
-                try:
-                    order_details = self.__buy_order_details(stock)
-                    if order_details:
-                        log.info('Buying %s. Order details: %s',
-                                 symbol, order_details)
-                        api.submit_order(
-                            symbol=symbol,
-                            side=signal,
-                            qty=order_details['qty'],
-                            type='market',
-                            time_in_force='gtc',
-                            order_class='bracket',
-                            take_profit=dict(
-                                limit_price=order_details['take_profit']
-                            ),
-                            stop_loss=dict(
-                                stop_price=order_details['stop_loss']
-                            )
-                        )
-                except Exception as e:
-                    log.error('Error placing buy order: %s', str(e))
+                # Check for any outstanding orders on stock, don't place order if so
+                already_held_order = False
+                for order in current_orders:
+                    if order.symbol == symbol:
+                        log.info(
+                            'Already holding order for %s, will not place new. Current order: %s', symbol, order)
+                        already_held_order = True
+                        break
+                if already_held_order:
                     continue
+                else:
+                    try:
+                        order_details = self.__buy_order_details(stock)
+                        if order_details:
+                            log.info('Buying %s. Order details: %s',
+                                     symbol, order_details)
+                            api.submit_order(
+                                symbol=symbol,
+                                side=signal,
+                                qty=order_details['qty'],
+                                type='market',
+                                time_in_force='gtc',
+                                order_class='bracket',
+                                take_profit=dict(
+                                    limit_price=order_details['take_profit']
+                                ),
+                                stop_loss=dict(
+                                    stop_price=order_details['stop_loss']
+                                )
+                            )
+                    except Exception as e:
+                        log.error('Error placing buy order: %s', str(e))
+                        continue
         else:
             log.info('Nothing to buy')
 

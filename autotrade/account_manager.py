@@ -12,11 +12,9 @@ class AccountManager:
         self.session_handler: SessionHandler = session_handler
         # Invest a maximum of 2% of current holding
         self.investment_pc = 2
-        
-        # TODO TESTIN ONLY!!! Set at 7 and 5 % respectivly
-        # Take profit at 7%
+        # Take profit at 4% gain
         self.take_profit_pc = 4
-        # Cover losses at 5%
+        # Cover losses at 2% drop
         self.stop_loss_pc = 2
 
     def account_details(self) -> dict:
