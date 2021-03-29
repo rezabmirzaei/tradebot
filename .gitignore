@@ -2,6 +2,9 @@
 config/prod_config.ini
 config/test_config.ini
 
+# Data
+data/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
