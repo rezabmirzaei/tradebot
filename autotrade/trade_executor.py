@@ -165,7 +165,7 @@ class TradeExecutor():
                     oca_date = datetime(oca.year, oca.month, oca.day).date()
                     if stock['ticker'] == order.symbol and oca_date == today:
                         log.info(
-                            'Already traded %s today (%s), will not trade again. Previous order details: %s', stock['ticker'], today, order)
+                            'Already traded %s today (%s), will not trade again. Previous order id: %s', stock['ticker'], today, order.id)
                         live_order = True
                         continue
                     if stock['ticker'] == order.symbol and (order.status == 'new' or order.status == 'held'):
