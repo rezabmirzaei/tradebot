@@ -25,6 +25,10 @@ class AccountManager:
         api = self.session_handler.api()
         return api.list_positions()
 
+    def orders(self, status=None) -> List[dict]:
+        api = self.session_handler.api()
+        return api.list_orders() if not status else api.list_orders(status=status)
+
     def is_eligible_for_trading(self) -> bool:
         """ Assess wether or not the account is eligable for trading """
         account = self.account_details()

@@ -1,6 +1,7 @@
 import logging
 import math
 import time
+from datetime import datetime, timezone
 from typing import List
 
 import alpaca_trade_api as tradeapi
@@ -44,6 +45,7 @@ class TradeExecutor():
         buy_list = [stock for stock in stock_list if (
             stock['advice'] == 'BUY')]
         buy_list = self.__filter_stocks_against_positions(buy_list, False)
+        buy_list = self.__filter_stocks_against_orders(buy_list)
         self.buy(buy_list)
 
     def update_positions(self, sell_list: List[dict]) -> None:
@@ -128,7 +130,7 @@ class TradeExecutor():
 
     def __filter_stocks_against_positions(self, stock_list: List[dict], holding_position: bool) -> List[dict]:
         """
-        Check wether or not position for a stock in a list is held in current portfolio
+        Check whether or not a position for a stock in a list is held in current portfolio
         """
         open_positions = self.account_manager.open_positions()
         if open_positions:
@@ -141,6 +143,39 @@ class TradeExecutor():
                         continue
                 if not holding_pos:
                     filtered_list.append(stock)
+            return filtered_list
+        else:
+            return stock_list
+
+    def __filter_stocks_against_orders(self, stock_list: List[dict]) -> List[dict]:
+        """
+        Check if there are active orders for a stock in provided stock list
+        """
+        today = datetime.today().replace(tzinfo=timezone.utc).date()
+        # FIX: Is there something wrong with 'status' param of list_orders()?
+        orders = self.account_manager.orders(status='nn')
+        if orders:
+            filtered_list = []
+            for stock in stock_list:
+                for order in orders:
+                    live_order = False
+                    # TODO Temporary/necessary due to issues in updated trading data from API
+                    # Remove once API is updated/improved with live data
+                    oca = order.created_at
+                    oca_date = datetime(oca.year, oca.month, oca.day).date()
+                    if stock['ticker'] == order.symbol and oca_date == today:
+                        log.info(
+                            'Already traded %s today (%s), will not trade again', stock['ticker'], today)
+                        live_order = True
+                        continue
+                    if stock['ticker'] == order.symbol and (order.status == 'new' or order.status == 'held'):
+                        # Order has already been placed. Don't trade again (for simplicity atm).
+                        log.info(
+                            'Already holding at least one order for %s today (%s), will not add any more', stock['ticker'], today)
+                        live_order = True
+                        continue
+                    if not live_order:
+                        filtered_list.append(stock)
             return filtered_list
         else:
             return stock_list
