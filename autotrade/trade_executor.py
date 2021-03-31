@@ -140,7 +140,7 @@ class TradeExecutor():
                 for pos in open_positions:
                     if stock['ticker'] == pos.symbol:
                         holding_pos = not holding_pos
-                        continue
+                        break
                 if not holding_pos:
                     filtered_list.append(stock)
             return filtered_list
@@ -154,6 +154,7 @@ class TradeExecutor():
         today = datetime.today().replace(tzinfo=timezone.utc).date()
         # FIX: Is there something wrong with 'status' param of list_orders()?
         orders = self.account_manager.orders(status='nn')
+        # TODO Filter orders properly: Need only todays, new or held
         if orders:
             filtered_list = []
             for stock in stock_list:
@@ -167,13 +168,13 @@ class TradeExecutor():
                         log.info(
                             'Already traded %s today (%s), will not trade again. Previous order id: %s', stock['ticker'], today, order.id)
                         live_order = True
-                        continue
+                        break
                     if stock['ticker'] == order.symbol and (order.status == 'new' or order.status == 'held'):
                         # Order has already been placed. Don't trade again (for simplicity atm).
                         log.info(
                             'Already holding at least one order for %s today (%s), will not add any more', stock['ticker'], today)
                         live_order = True
-                        continue
+                        break
                 if not live_order:
                     filtered_list.append(stock)
             return filtered_list
