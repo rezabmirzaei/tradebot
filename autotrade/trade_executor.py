@@ -64,9 +64,9 @@ class TradeExecutor():
                     break
                 # TODO Must handle potential holding orders before selling
                 if sell_signal or (unrealized_plpc >= (self.account_manager.take_profit_pc / 100) or unrealized_plpc <= -(self.account_manager.stop_loss_pc / 100)):
-                    log.info('Selling %s shares of %s (profit: %s)',
-                             qty, symbol, unrealized_plpc)
                     try:
+                        log.info('Selling %s shares of %s (profit: %s)',
+                                 qty, symbol, unrealized_plpc)
                         api.submit_order(
                             symbol=symbol,
                             side='sell',
@@ -165,7 +165,7 @@ class TradeExecutor():
                     oca_date = datetime(oca.year, oca.month, oca.day).date()
                     if stock['ticker'] == order.symbol and oca_date == today:
                         log.info(
-                            'Already traded %s today (%s), will not trade again', stock['ticker'], today)
+                            'Already traded %s today (%s), will not trade again. Previous order details: %s', stock['ticker'], today, order)
                         live_order = True
                         continue
                     if stock['ticker'] == order.symbol and (order.status == 'new' or order.status == 'held'):
@@ -174,8 +174,8 @@ class TradeExecutor():
                             'Already holding at least one order for %s today (%s), will not add any more', stock['ticker'], today)
                         live_order = True
                         continue
-                    if not live_order:
-                        filtered_list.append(stock)
+                if not live_order:
+                    filtered_list.append(stock)
             return filtered_list
         else:
             return stock_list
