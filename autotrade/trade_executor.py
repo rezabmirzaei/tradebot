@@ -35,18 +35,24 @@ class TradeExecutor():
         sell_list = self.__filter_stocks_against_positions(sell_list, True)
         self.update_positions(sell_list)
 
-        # Wait 1 min from updating before proceeding to buy
-        time_to_sleep = 60
-        log.info(
-            'Done updating positions, waiting %s seconds...', time_to_sleep)
-        time.sleep(time_to_sleep)
+        open_positions = self.account_manager.open_positions()
+        if open_positions and len(open_positions) > 9:
+            log.warn('Holding %s open positions, will not buy any more',
+                     len(open_positions))
+            return
+        else:
+            # Wait 1 min from updating before proceeding to buy
+            time_to_sleep = 60
+            log.info(
+                'Done updating positions, waiting %s seconds...', time_to_sleep)
+            time.sleep(time_to_sleep)
 
-        # 2 Buy stocks as signaled (only if not already holding)
-        buy_list = [stock for stock in stock_list if (
-            stock['advice'] == 'BUY')]
-        buy_list = self.__filter_stocks_against_positions(buy_list, False)
-        buy_list = self.__filter_stocks_against_orders(buy_list)
-        self.buy(buy_list)
+            # 2 Buy stocks as signaled (only if not already holding)
+            buy_list = [stock for stock in stock_list if (
+                stock['advice'] == 'BUY')]
+            buy_list = self.__filter_stocks_against_positions(buy_list, False)
+            buy_list = self.__filter_stocks_against_orders(buy_list)
+            self.buy(buy_list)
 
     def update_positions(self, sell_list: List[dict]) -> None:
         open_positions = self.account_manager.open_positions()
@@ -62,8 +68,9 @@ class TradeExecutor():
                     if stock['ticker'] == symbol:
                         sell_signal = True
                     break
-                # TODO Must handle potential holding orders before selling
                 if sell_signal or (unrealized_plpc >= (self.account_manager.take_profit_pc / 100) or unrealized_plpc <= -(self.account_manager.stop_loss_pc / 100)):
+                    log.info('Preparing sell of position held for %s', symbol)
+                    self.__cancel_orders_before_sell(symbol)
                     try:
                         log.info('Selling %s shares of %s (profit: %s)',
                                  qty, symbol, unrealized_plpc)
@@ -78,6 +85,19 @@ class TradeExecutor():
                         continue
         else:
             log.info('No open positions to update')
+
+    def __cancel_orders_before_sell(self, symbol: str) -> None:
+        # FIX: Is there something wrong with 'status' param of list_orders()?
+        orders = self.account_manager.orders(status='nn')
+        if orders:
+            api = self.session_handler.api()
+            for order in orders:
+                if order.symbol == symbol and (order.status == 'new' or order.status == 'held'):
+                    log.info(
+                        'Cancelling outstanding order for %s before selling (id=%s)', symbol, order.id)
+                    api.cancel_order(order.id)
+        else:
+            log.info('No outstanding orders for %s, proceeding to sell', symbol)
 
     def buy(self, buy_list: List[dict]) -> None:
         if buy_list:

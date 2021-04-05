@@ -1,4 +1,6 @@
 import logging
+from configparser import ConfigParser
+from os import environ
 from typing import List
 
 from autotrade.session_handler import SessionHandler
@@ -10,12 +12,13 @@ class AccountManager:
 
     def __init__(self, session_handler: SessionHandler) -> None:
         self.session_handler: SessionHandler = session_handler
-        # Invest a maximum of 2% of current holding
-        self.investment_pc = 2
-        # Take profit at 4% gain
-        self.take_profit_pc = 4
-        # Cover losses at 2% drop
-        self.stop_loss_pc = 2
+        config = ConfigParser()
+        config_file_path = 'config/prod_config.ini' if environ.get(
+            'ENVIRONMENT') == 'PROD' else 'config/test_config.ini'
+        config.read(config_file_path)
+        self.investment_pc = int(config.get('MGMT', 'investment_pc'))
+        self.take_profit_pc = int(config.get('MGMT', 'take_profit_pc'))
+        self.stop_loss_pc = int(config.get('MGMT', 'stop_loss_pc'))
 
     def account_details(self) -> dict:
         api = self.session_handler.api()
