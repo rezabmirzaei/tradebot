@@ -60,20 +60,14 @@ class TradeExecutor():
             log.info('Updating current positions')
             api = self.session_handler.api()
             for position in open_positions:
-                symbol = position.symbol
-                qty = int(position.qty)
-                unrealized_plpc = float(position.unrealized_plpc)
-                sell_signal = False
-                for stock in sell_list:
-                    if stock['ticker'] == symbol:
-                        sell_signal = True
-                    break
-                if sell_signal or (unrealized_plpc >= (self.account_manager.take_profit_pc / 100) or unrealized_plpc <= -(self.account_manager.stop_loss_pc / 100)):
+                if self.__should_sell(sell_list, position):
+                    symbol = position.symbol
                     log.info('Preparing sell of position held for %s', symbol)
                     self.__cancel_orders_before_sell(symbol)
                     try:
+                        qty = int(position.qty)
                         log.info('Selling %s shares of %s (profit: %s)',
-                                 qty, symbol, unrealized_plpc)
+                                 qty, symbol, position.unrealized_plpc)
                         api.submit_order(
                             symbol=symbol,
                             side='sell',
@@ -85,6 +79,16 @@ class TradeExecutor():
                         continue
         else:
             log.info('No open positions to update')
+
+    def __should_sell(self, sell_list: List[dict], position) -> bool:
+        for stock in sell_list:
+            if stock['ticker'] == position.symbol:
+                return True
+        unrealized_plpc = float(position.unrealized_plpc)
+        # TODO Check how long you've held a particular position and reevaluate limits
+        take_profit_limit = self.account_manager.take_profit_pc / 100
+        stop_loss_limit = -(self.account_manager.stop_loss_pc / 100)
+        return (unrealized_plpc >= take_profit_limit or unrealized_plpc <= stop_loss_limit)
 
     def __cancel_orders_before_sell(self, symbol: str) -> None:
         # FIX: Is there something wrong with 'status' param of list_orders()?
