@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from configparser import ConfigParser
 from os import environ
 from typing import List
@@ -13,8 +14,8 @@ class DataFetcher:
 
     def __init__(self) -> None:
         config = ConfigParser()
-        config_file_path = 'config/prod_config.ini' if environ.get(
-            'ENVIRONMENT') == 'PROD' else 'config/test_config.ini'
+        config_file_path = os.path.join(os.path.dirname(__file__), '..\\config\\prod_config.ini') if environ.get(
+            'ENVIRONMENT') == 'PROD' else os.path.join(os.path.dirname(__file__), '..\\config\\test_config.ini')
         config.read(config_file_path)
         self.base_url = config.get('DATA_API', 'base_url')
         # List of indexes to get stock data from for trading
