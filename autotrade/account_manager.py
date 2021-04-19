@@ -1,9 +1,8 @@
 import logging
+import os
 from configparser import ConfigParser
 from os import environ
 from typing import List
-
-import os
 
 from autotrade.session_handler import SessionHandler
 
