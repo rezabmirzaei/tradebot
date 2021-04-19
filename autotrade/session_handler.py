@@ -9,7 +9,7 @@ class SessionHandler():
 
     def __init__(self) -> None:
         config = ConfigParser()
-        cconfig_file_path = os.path.join(os.path.dirname(__file__), '..\\config\\prod_config.ini') if environ.get(
+        config_file_path = os.path.join(os.path.dirname(__file__), '..\\config\\prod_config.ini') if environ.get(
             'ENVIRONMENT') == 'PROD' else os.path.join(os.path.dirname(__file__), '..\\config\\test_config.ini')
         config.read(config_file_path)
         self.api_key = config.get('ALPACA_API', 'key')
