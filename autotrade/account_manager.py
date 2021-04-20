@@ -1,5 +1,4 @@
 import logging
-from configparser import ConfigParser
 from typing import List
 
 from autotrade.session_handler import SessionHandler
@@ -9,11 +8,11 @@ log = logging.getLogger('tradebot.log')
 
 class AccountManager:
 
-    def __init__(self, config: ConfigParser, session_handler: SessionHandler) -> None:
+    def __init__(self, config: dict, session_handler: SessionHandler) -> None:
         self.session_handler: SessionHandler = session_handler
-        self.investment_pc = int(config.get('MGMT', 'investment_pc'))
-        self.take_profit_pc = int(config.get('MGMT', 'take_profit_pc'))
-        self.stop_loss_pc = int(config.get('MGMT', 'stop_loss_pc'))
+        self.investment_pc = int(config['investment_pc'])
+        self.take_profit_pc = int(config['take_profit_pc'])
+        self.stop_loss_pc = int(config['stop_loss_pc'])
 
     def account_details(self) -> dict:
         api = self.session_handler.api()

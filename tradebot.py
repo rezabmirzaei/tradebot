@@ -13,8 +13,8 @@ from autotrade.session_handler import SessionHandler
 from autotrade.trade_executor import TradeExecutor
 
 config = ConfigParser()
-config_file_path = os.path.join(os.path.dirname(__file__), '..\\config\\prod_config.ini') if environ.get(
-    'ENVIRONMENT') == 'PROD' else os.path.join(os.path.dirname(__file__), '..\\config\\test_config.ini')
+config_file_path = os.path.join(os.path.dirname(__file__), 'config', 'prod_config.ini') if environ.get(
+    'ENVIRONMENT') == 'PROD' else os.path.join(os.path.dirname(__file__), 'config', 'test_config.ini')
 config.read(config_file_path)
 
 logging_filename_master = 'tradebot.log'
@@ -23,13 +23,13 @@ logging.basicConfig(filename=logging_filename_master,
 log = logging.getLogger(logging_filename_master)
 
 # Handle the session and connectivity to Alpaca
-sh = SessionHandler(config)
+sh = SessionHandler(dict(config.items('ALPACA_API')))
 
 # Manage account (money&risk)
-am = AccountManager(config, sh)
+am = AccountManager(dict(config.items('MGMT')), sh)
 
 # Retrieve data on stocks to evaluate and potentially trade on
-df = DataFetcher(config)
+df = DataFetcher(dict(config.items('DATA_API')))
 
 # Execute the actual identified trades
 tx = TradeExecutor(sh, am)

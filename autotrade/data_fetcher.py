@@ -1,6 +1,5 @@
 import json
 import logging
-from configparser import ConfigParser
 from typing import List
 
 import requests
@@ -10,8 +9,8 @@ log = logging.getLogger('tradebot.log')
 
 class DataFetcher:
 
-    def __init__(self, config: ConfigParser) -> None:
-        self.base_url = config.get('DATA_API', 'base_url')
+    def __init__(self, config: dict) -> None:
+        self.base_url = config['base_url']
         # List of indexes to get stock data from for trading
         self.index_list = ['dow', 'nasdaq100', 'sp500']
 
