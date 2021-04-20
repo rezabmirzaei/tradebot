@@ -1,7 +1,5 @@
 import logging
-import os
 from configparser import ConfigParser
-from os import environ
 from typing import List
 
 from autotrade.session_handler import SessionHandler
@@ -11,12 +9,8 @@ log = logging.getLogger('tradebot.log')
 
 class AccountManager:
 
-    def __init__(self, session_handler: SessionHandler) -> None:
+    def __init__(self, config: ConfigParser, session_handler: SessionHandler) -> None:
         self.session_handler: SessionHandler = session_handler
-        config = ConfigParser()
-        config_file_path = os.path.join(os.path.dirname(__file__), '..\\config\\prod_config.ini') if environ.get(
-            'ENVIRONMENT') == 'PROD' else os.path.join(os.path.dirname(__file__), '..\\config\\test_config.ini')
-        config.read(config_file_path)
         self.investment_pc = int(config.get('MGMT', 'investment_pc'))
         self.take_profit_pc = int(config.get('MGMT', 'take_profit_pc'))
         self.stop_loss_pc = int(config.get('MGMT', 'stop_loss_pc'))

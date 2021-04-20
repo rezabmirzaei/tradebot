@@ -1,17 +1,11 @@
-import os
 from configparser import ConfigParser
-from os import environ
 
 import alpaca_trade_api as tradeapi
 
 
 class SessionHandler():
 
-    def __init__(self) -> None:
-        config = ConfigParser()
-        config_file_path = os.path.join(os.path.dirname(__file__), '..\\config\\prod_config.ini') if environ.get(
-            'ENVIRONMENT') == 'PROD' else os.path.join(os.path.dirname(__file__), '..\\config\\test_config.ini')
-        config.read(config_file_path)
+    def __init__(self, config: ConfigParser) -> None:
         self.api_key = config.get('ALPACA_API', 'key')
         self.api_secret = config.get('ALPACA_API', 'secret')
         self.base_url = config.get('ALPACA_API', 'base_url')
